@@ -1,15 +1,36 @@
-#include <Arduino.h>
-#include <Adafruit_Neopixel.h>
-#include <avr/power.h>
-
 #define neopixelPin     4
 #define buttonPin       3
 #define NUMPIXELS      12
+#define ARDUINOISSHIT   5
 
+#include <Adafruit_Neopixel.h>
+#include <avr/power.h>
+#include <Arduino.h>
+#define MESSAGE_LENGTH 39
+#define buttonID 0x01
+
+#define MESSAGE_PATTERN 0xB7
+
+uint32_t currentImage[NUMPIXELS];
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, neopixelPin, NEO_GRB + NEO_KHZ800);
+bool imageChanged = false;
+
+void send_Button_Pressed() {
+  // byte message[4];
+  // message[0] = MESSAGE_PATTERN;
+  // message[1] = 0x00;
+  // message[2] = 0x02;
+  // message[3] = buttonID;
+
+  //Serial.write(message,4);
+  Serial.write(MESSAGE_PATTERN);
+  Serial.write(0xFF);
+  Serial.write(0x02);
+  Serial.write(buttonID);
+}
 
 int spiralize_delay = 50;
-int buttonInst = 9;
+int buttonInst = 2;
 
 void setSpiralColor(int r, int g, int b){
   for(int i=0;i<NUMPIXELS;i++){
@@ -17,6 +38,34 @@ void setSpiralColor(int r, int g, int b){
       pixels.show();
       delay(spiralize_delay);
     } 
+}
+
+//extracts data after message pattern is matched
+void Parse_DRB_Message(byte message[]) {
+  //ignore byte 0 (message pattern)
+
+  //parse device ID (byte 1)
+  byte DeviceID = message[1];
+
+  if (DeviceID != buttonID) { return; }
+
+  //parse message type (byte 2)
+  byte messageType = message[2];
+
+  switch (messageType){
+    case (0x01):
+      //parse image data (bytes 3-38)
+      for (short i = 0; i < NUMPIXELS; i++) {
+        currentImage[i] = (((uint32_t)int(message[3*i]) << 16) | ((uint32_t)int(message[(3*i)+1]) <<  8) | (uint8_t)int(message[(3*i)+2]));
+      }
+      
+      imageChanged = true;
+      break;
+
+    default:
+      break;
+  }
+
 }
 
 uint32_t Wheel(byte WheelPos) {
@@ -67,24 +116,55 @@ void hardcodedColors(int s){
   
 }
 
-/**
- * XBee Reading Code
- */
-void SerialEvent() {
-  hardcodedColors(Serial.read());
+// /**
+//  * XBee Reading Code
+//  */
+// void SerialEvent() {
+//   hardcodedColors(Serial.read());
+// }
+
+void serialEvent() {
+  while (Serial.available() >= MESSAGE_LENGTH-5) {
+    byte inByte = Serial.read();
+
+    if (inByte == MESSAGE_PATTERN) {
+      byte message[MESSAGE_LENGTH];
+      message[0] = inByte;
+      for (short i = 1; i < MESSAGE_LENGTH; i++) {
+        delay(100);
+        if (Serial.available()) { message[i] = Serial.read(); }
+      }
+
+      Parse_DRB_Message(message);
+    }
+  }
 }
+
 
 /**
  * Code to handle smashing of driver button
  */
 void buttonSmash() {
-  if (!digitalRead(buttonPin)) {
-    Serial.write(buttonInst);
-    hardcodedColors(buttonInst);
+  // if (!digitalRead(buttonPin)) {
+  //   Serial.write(buttonInst);
+  //   hardcodedColors(buttonInst);
+  // }
+  send_Button_Pressed();
+}
+
+void draw(){
+  if (imageChanged) {
+    imageChanged = false;
+    for (int i = 0; i < NUMPIXELS; i++) {
+      pixels.setPixelColor(i, currentImage[i]);
+    }
+    pixels.show();
   }
 }
 
-void loop() {}
+void loop() {
+  draw();
+}
 
 void setup() {
   //XBee Communication
@@ -94,5 +174,7 @@ void setup() {
   //Setup Button Input
   pinMode(buttonPin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(buttonPin),buttonSmash,CHANGE);
+  delay(750);
+  setSpiralColor(100,100,100);
 }
 

@@ -19,10 +19,40 @@ void setup() {
 }
 
 void loop() {
-  if (Serial1.available() > 0) {
-    lcd.clear();
-    //String test = Serial1.read();
-    //Serial.println(Serial1.read());
-    lcd.print(Serial1.read());
+  //uint8_t buttons = lcd.readButtons();
+
+  if (Serial1.available() >= 37) {
+    byte inByte = Serial1.read();
+
+    if (inByte == 0xB7) {
+      byte message[39];
+      message[0] = inByte;
+      for (short i = 1; i < 39; i++) {
+        if (Serial1.available()) {  message[i] = Serial1.read(); }
+      }
+      
+      Serial.print("-------\n");
+      for (int i = 0; i < 39; i++) {
+        Serial.println(message[i], HEX);
+      }
+      Serial.print("-------\n");
+    }
+    //lcd.clear();
+    //lcd.print(Serial1.read());
+    //Serial.print(Serial1.read(), HEX);
   }
 }
+
+// void serialEvent() {
+//   while (Serial.available()) {
+//     byte inByte = Serial.read();
+
+//     if (inByte == MESSAGE_PATTERN) {
+//       byte message[MESSAGE_LENGTH];
+//       message[0] = inByte;
+//       for (short i = 1; i < 37; i++) {
+//         message[i] = Serial.read();
+//       }
+//     }
+//   }
+// }
