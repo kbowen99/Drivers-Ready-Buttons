@@ -45,21 +45,15 @@ void setSpiralColor(int r, int g, int b){
 
 //extracts data after message pattern is matched
 void Parse_DRB_Message(byte message[]) {
-  //ignore byte 0 (message pattern)
-
-  //parse device ID (byte 1)
-  byte DeviceID = message[1];
-
-  if (DeviceID != buttonID) { return; }
-
-  //parse message type (byte 2)
-  byte messageType = message[2];
+  //parse message type (byte 1)
+  byte messageType = message[1];
 
   switch (messageType){
     case (0x01):
-      //parse image data (bytes 3-38)
+      //parse image data (bytes 2-37)
       for (short i = 0; i < NUMPIXELS; i++) {
-        currentImage[i] = (((uint32_t)int(message[3*i]) << 16) | ((uint32_t)int(message[(3*i)+1]) <<  8) | (uint8_t)int(message[(3*i)+2]));
+        int index = (3*i)+2;
+        currentImage[i] = (((uint32_t)int(message[index]) << 16) | ((uint32_t)int(message[index+1]) <<  8) | (uint8_t)int(message[index+2]));
       }
       
       imageChanged = true;
@@ -127,21 +121,19 @@ void hardcodedColors(int s){
 // }
 
 void serialEvent() {
-  while (Serial.available() >= MESSAGE_LENGTH-5) {
+  while (Serial.available()) {
     byte inByte = Serial.read();
 
     if (inByte == MESSAGE_PATTERN) {
       byte message[MESSAGE_LENGTH];
-      message[0] = inByte;
-      for (short i = 1; i < MESSAGE_LENGTH; i++) {
-        while (Serial.available() <= 0) { delay(1); }
-        message[i] = Serial.read();
-      }
+
+      Serial.readBytesUntil(';', message, MESSAGE_LENGTH);  //; is 3B
+      
+      if (message[0] != buttonID) { return; }
 
       Parse_DRB_Message(message);
     }
   }
-  lastMessageTime = millis();
 }
 
 
@@ -168,15 +160,12 @@ void draw(){
 
 void loop() {
   draw();
-
-  if ((millis() - lastMessageTime > messageTimeout) && Serial.available()) {
-    Serial.read();
-  }
 }
 
 void setup() {
   //XBee Communication
   Serial.begin(115200);
+  Serial.setTimeout(250);
   //Initialize Neopixel Ring
   pixels.begin();
   //Setup Button Input
