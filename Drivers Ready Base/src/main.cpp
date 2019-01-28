@@ -16,32 +16,86 @@ void setup() {
   while(!Serial1){}
   lcd.clear();
   lcd.print("Ready");
+  pinMode(13, OUTPUT);
 }
+
+#define MESSAGE_PATTERN 0xB7
+#define MESSAGE_LENGTH 40
+
+#define buttonID 0x01
+#define NUMPIXELS 12
+uint32_t currentImage[NUMPIXELS];
+bool imageChanged = false;
+
+void Parse_DRB_Message(byte message[]) {
+  for (short i = 0; i < NUMPIXELS; i++) {
+    int index = (3*i);
+    Serial.print("R: ");
+    Serial.print(int(message[index]));
+    Serial.print("\tG: ");
+    Serial.print(int(message[index+1]));
+    Serial.print("\tB: ");
+    Serial.println(int(message[index+2]));
+
+    currentImage[i] = (((uint32_t)int(message[index]) << 16) | ((uint32_t)int(message[index+1]) <<  8) | (uint8_t)int(message[index+2]));
+  }
+      
+  imageChanged = true;
+
+}
+
+#define TIME 100
 
 void loop() {
   //uint8_t buttons = lcd.readButtons();
 
-  if (Serial1.available() >= 37) {
-    byte inByte = Serial1.read();
-
-    if (inByte == 0xB7) {
-      byte message[39];
-      message[0] = inByte;
-      for (short i = 1; i < 39; i++) {
-        if (Serial1.available()) {  message[i] = Serial1.read(); }
-      }
-      
-      Serial.print("-------\n");
-      for (int i = 0; i < 39; i++) {
-        Serial.println(message[i], HEX);
-      }
-      Serial.print("-------\n");
+  for (int i = 0; i < 12; i++) {
+    Serial1.write(0xB7);
+    Serial1.write(0x01);
+    Serial1.write(0x01);
+    for (int j = 0; j < i; j++) {
+      Serial1.write(0x000000);
     }
-    //lcd.clear();
-    //lcd.print(Serial1.read());
-    //Serial.print(Serial1.read(), HEX);
+    Serial1.write(0xFFFFFF);
+    for (int j = i+1; j < 12; j++) {
+      Serial1.write(0x000000);
+    }
+    digitalWrite(13, HIGH);
+    delay(TIME);
+    digitalWrite(13, LOW);
   }
 }
+
+// void serialEvent() {
+//   while (Serial.available()) {
+//     byte inByte = Serial.read();
+
+//     if (inByte == MESSAGE_PATTERN) {
+
+//       while (Serial.available() == 0) { delay(1); }
+//       byte targetDevice = Serial.read();
+//       if (targetDevice != buttonID) { return; }
+
+//       while (Serial.available() == 0) { delay(1); }
+//       byte messageType = Serial.read();
+
+      
+//       byte message[NUMPIXELS*3];
+
+//       int bytesRead = Serial.readBytesUntil(';', message, NUMPIXELS*3);  //; is 3B
+
+//       for (int i = 0; i < 36; i++) { Serial.write(message[i]); Serial.flush(); delay(25); }
+
+//       Parse_DRB_Message(message);
+
+//       delay(50);
+
+//       Serial.println("Something else coherent");
+
+//     }
+//   }
+// }
+
 
 // void serialEvent() {
 //   while (Serial.available()) {
