@@ -15,6 +15,9 @@ uint32_t currentImage[NUMPIXELS];
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, neopixelPin, NEO_GRB + NEO_KHZ800);
 bool imageChanged = false;
 
+long lastMessageTime;
+int messageTimeout = 300;
+
 void send_Button_Pressed() {
   // byte message[4];
   // message[0] = MESSAGE_PATTERN;
@@ -131,13 +134,14 @@ void serialEvent() {
       byte message[MESSAGE_LENGTH];
       message[0] = inByte;
       for (short i = 1; i < MESSAGE_LENGTH; i++) {
-        delay(100);
-        if (Serial.available()) { message[i] = Serial.read(); }
+        while (Serial.available() <= 0) { delay(1); }
+        message[i] = Serial.read();
       }
 
       Parse_DRB_Message(message);
     }
   }
+  lastMessageTime = millis();
 }
 
 
@@ -164,6 +168,10 @@ void draw(){
 
 void loop() {
   draw();
+
+  if ((millis() - lastMessageTime > messageTimeout) && Serial.available()) {
+    Serial.read();
+  }
 }
 
 void setup() {
@@ -174,7 +182,7 @@ void setup() {
   //Setup Button Input
   pinMode(buttonPin, INPUT_PULLUP);
   attachInterrupt(digitalPinToInterrupt(buttonPin),buttonSmash,CHANGE);
-  delay(750);
+  //delay(750);
   setSpiralColor(100,100,100);
 }
 
