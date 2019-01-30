@@ -1,177 +1,40 @@
-#define neopixelPin     4
-#define buttonPin       3
-#define NUMPIXELS      12
-#define ARDUINOISSHIT   5
-
-#include <Adafruit_Neopixel.h>
-#include <avr/power.h>
 #include <Arduino.h>
-#define MESSAGE_LENGTH 40
-#define buttonID 0x01
+#include "XBeeProto.h"
+#include "neoDraw.h"
+#include "main.h"
+#include "storedSettings.h"
 
-#define MESSAGE_PATTERN 0xB7
-
-#define TIMEOUT 500
+#define BUTTON_PIN       3
+#define BUTTON_TIMEOUT    750
 
 uint32_t currentImage[NUMPIXELS];
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, neopixelPin, NEO_GRB + NEO_KHZ800);
 bool imageChanged = false;
 
-long lastMessageTime;
+unsigned long lastButtonSmash = 0;
 
-void send_Button_Pressed() {
-  Serial.write(MESSAGE_PATTERN);
-  Serial.write(0xFF);
-  Serial.write(0x02);
-  Serial.write(buttonID);
-}
-
-int spiralize_delay = 50;
-int buttonInst = 2;
-
-void setSpiralColor(int r, int g, int b){
-  for(int i=0;i<NUMPIXELS;i++){
-      pixels.setPixelColor(i, pixels.Color(r,g,b));
-      pixels.show();
-      delay(spiralize_delay);
-    } 
-}
-
-//extracts data after message pattern is matched
-void Parse_DRB_Message(byte message[]) {
-  for (short i = 0; i < NUMPIXELS; i++) {
-    int index = (3*i);
-    currentImage[i] = (((uint32_t)int(message[index]) << 16) | ((uint32_t)int(message[index+1]) <<  8) | (uint32_t)int(message[index+2]));
-  }
-      
-  imageChanged = true;
-
-}
-
-uint32_t Wheel(byte WheelPos) {
-  WheelPos = 255 - WheelPos;
-  if(WheelPos < 85) {
-    return pixels.Color(255 - WheelPos * 3, 0, WheelPos * 3);
-  }
-  if(WheelPos < 170) {
-    WheelPos -= 85;
-    return pixels.Color(0, WheelPos * 3, 255 - WheelPos * 3);
-  }
-  WheelPos -= 170;
-  return pixels.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
-}
-
-void rainbowCycle(uint8_t wait) {
-  uint16_t i, j;
-
-  for(j=0; j<256*5; j++) { // 5 cycles of all colors on wheel
-    for(i=0; i< pixels.numPixels(); i++) {
-      pixels.setPixelColor(i, Wheel(((i * 256 / pixels.numPixels()) + j) & 255));
-    }
-    pixels.show();
-    delay(wait);
-  }
-}
-
-void hardcodedColors(int s){
-  switch (s){
-    case 0:
-    setSpiralColor(255,255,255);
-    break;
-    case 1:
-    setSpiralColor(255,0,0);
-    break;
-    case 2:
-    setSpiralColor(0,255,0);
-    break;
-    case 3:
-    setSpiralColor(0,0,255);
-    break;
-    case 9:
-    rainbowCycle(20);
-    break;
-    default:
+void buttonSmash() {
+  if ((millis() - lastButtonSmash) > BUTTON_TIMEOUT){
+    lastButtonSmash = millis();
+    setSpiralColor(getColorR(),getColorG(),getColorB());
+    send_Button_Pressed();
     setSpiralColor(0,0,0);
   }
-  
 }
 
-// /**
-//  * XBee Reading Code
-//  */
-// void SerialEvent() {
-//   hardcodedColors(Serial.read());
-// }
-
-void serialEvent() {
-  while (Serial.available()) {
-    byte inByte = Serial.read();
-
-    if (inByte == MESSAGE_PATTERN) {
-
-      while (Serial.available() == 0) { delay(1); }
-      byte targetDevice = Serial.read();
-      if (targetDevice != buttonID) { return; }
-
-      while (Serial.available() == 0) { delay(1); }
-      byte messageType = Serial.read();
-
-      
-      byte message[NUMPIXELS*3];
-
-      long startTime = millis();
-      int index = 0;
-      while (millis() < startTime + TIMEOUT) {
-          while (Serial.available() == 0) { delay(1); }
-          message[index] = Serial.read();
-          index++;
-          if (index == NUMPIXELS*3) { break; }
-      }
-
-      if (index != 36) { Serial.print("ERR"); Serial.flush(); return;}
-
-      Parse_DRB_Message(message);
-
-    }
-  }
-}
-
-
-/**
- * Code to handle smashing of driver button
- */
-void buttonSmash() {
-  // if (!digitalRead(buttonPin)) {
-  //   Serial.write(buttonInst);
-  //   hardcodedColors(buttonInst);
-  // }
-  send_Button_Pressed();
-}
-
-void draw(){
-  if (imageChanged) {
-    imageChanged = false;
-    for (int i = 0; i < NUMPIXELS; i++) {
-      pixels.setPixelColor(i, currentImage[i]);
-    }
-    pixels.show();
-  }
+void setup() {
+  //setColorR(0);setColorG(0);setColorB(0);setUseStored(true);
+  setupNeopixel();
+  setSpiralColor(getColorR(),getColorG(),getColorB());
+  Serial.begin(115200);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(BUTTON_PIN),buttonSmash,CHANGE);
+  setSpiralColor(0,0,0);
 }
 
 void loop() {
   draw();
 }
 
-void setup() {
-  //XBee Communication
-  Serial.begin(115200);
-  Serial.setTimeout(5000);
-  //Initialize Neopixel Ring
-  pixels.begin();
-  //Setup Button Input
-  pinMode(buttonPin, INPUT_PULLUP);
-  attachInterrupt(digitalPinToInterrupt(buttonPin),buttonSmash,CHANGE);
-  //delay(750);
-  setSpiralColor(100,100,100);
+void SerialEvent() {
+  readSerial();
 }
-
