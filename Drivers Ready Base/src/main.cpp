@@ -1,13 +1,15 @@
 #pragma once
 #include <Arduino.h>
-#include "main.h"
 #include "magicMenu.h"
 #include "storedSettings.h"
 
 #define MATCH_TIME_MILLIS       3*60*1000
 #define ARMING_TIME             5*1000
+#define DEBUG_SERIAL            true
 
 void setup() {
+  //resetAll();
+
   setupLCD();
   updateMainStatus("Starting Serial.");
   Serial.begin(115200);
@@ -18,6 +20,26 @@ void setup() {
     updateMainStatus("Ready.");
   else
     updateMainStatus("Program Buttons!");
+
+  if (DEBUG_SERIAL){
+    Serial.println("ROBOCONTROL Parameters");
+    Serial.print("Using EEPROM: ");
+    Serial.println(storedSettings());
+    Serial.print("Using Judge Button: ");
+    Serial.println(getJudgeButton());
+    Serial.print("Number of Drivers: ");
+    Serial.println(getNumberDrivers());
+    Serial.print("JBtn: ");
+    Serial.println(getJudgeSA());
+    Serial.print("DRBtn1: ");
+    Serial.println(getDriver1SA());
+    Serial.print("DRBtn2: ");
+    Serial.println(getDriver2SA());
+    Serial.print("DRBtn3: ");
+    Serial.println(getDriver3SA());
+    Serial.print("DRBtn4: ");
+    Serial.println(getDriver4SA());
+  }
 }
 
 /**
@@ -48,13 +70,15 @@ void serialEvent1(){
             byte ChecksumByte = Serial1.read();
             byte message[] = {0xB7, targetDevice, messageType, buttonSent};
             if (ChecksumByte != checkSum(message, 4)) { updateMainStatus("badChecksum");return; }
-            String disp = "Button ";
+            String disp = "Btn ";
             disp = disp + (int)buttonSent;
             disp = disp + " Pressed";
             updateMainStatus(disp);
+            receivedAddr(buttonSent);
         }
     }
 }
+
 
 void loop() {
   updateLCD();

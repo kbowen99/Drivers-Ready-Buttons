@@ -157,3 +157,9 @@ uint8_t getNumberDrivers() {
     return EEPROM.read(NUM_BUTTONS_EEPROM) - EEPROM.read(JUDGE_BUTTON_ENABLED);
 }
 
+/**
+ * Sets the number of programmed buttons
+ */
+void setNumberButtons(uint8_t n) {
+    EEPROM.write(NUM_BUTTONS_EEPROM, n);
+}

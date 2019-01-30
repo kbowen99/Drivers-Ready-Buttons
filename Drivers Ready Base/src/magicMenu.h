@@ -7,3 +7,4 @@ void updateLCD();
 void navigateMenus();
 void drawCurrent();
 void updateMainStatus(String s);
+void receivedAddr(uint8_t addr);
