@@ -20,6 +20,17 @@ void setup() {
     updateMainStatus("Program Buttons!");
 }
 
+/**
+ * Eric's Checksum implementation, should help a bit with data loss
+ */
+byte checkSum(byte message[], int numBytes) {
+  byte total = 0x00;
+  for (int i = 0; i < numBytes; i++) {
+    total += message[i];
+  }
+  return total;
+}
+
 void serialEvent1(){
    while (Serial1.available())
     {
@@ -33,6 +44,10 @@ void serialEvent1(){
             byte messageType = Serial1.read();
             while (Serial1.available() == 0){delay(1);}
             byte buttonSent = Serial1.read();
+            while (Serial1.available() == 0) { delay(1); }
+            byte ChecksumByte = Serial1.read();
+            byte message[] = {0xB7, targetDevice, messageType, buttonSent};
+            if (ChecksumByte != checkSum(message, 4)) { updateMainStatus("badChecksum");return; }
             String disp = "Button ";
             disp = disp + (int)buttonSent;
             disp = disp + " Pressed";

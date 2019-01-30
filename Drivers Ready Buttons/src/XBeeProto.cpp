@@ -5,7 +5,7 @@
 #include "neoDraw.h"
 #include <avr/power.h>
 
-#define buttonID            0x03
+#define buttonID            0x02
 #define MESSAGE_LENGTH      40
 #define MESSAGE_PATTERN     0xB7
 #define TIMEOUT             1000
@@ -18,9 +18,15 @@ long lastMessageTime;
 void send_Button_Pressed()
 {
     Serial.write(MESSAGE_PATTERN);
+    delay(10);
     Serial.write(0xFF);
+    delay(10);
     Serial.write(0x02);
+    delay(10);
     Serial.write(buttonID);
+    delay(10);
+    byte message[] = {MESSAGE_PATTERN, 0xFF, 0x02, buttonID};
+    Serial.write(checkSum(message,4));
 }
 
 /**
@@ -88,8 +94,21 @@ void readSerial()
                 Serial.flush();
                 return;
             }
-
+            while (Serial.available() == 0) { delay(1); }
+            byte ChecksumByte = Serial.read();
+            if (ChecksumByte != checkSum(message, NUMPIXELS*3)) { return; }
             Parse_DRB_Message(message);
         }
     }
+}
+
+/**
+ * Eric's Checksum implementation, should help a bit with data loss
+ */
+byte checkSum(byte message[], int numBytes) {
+  byte total = 0x00;
+  for (int i = 0; i < numBytes; i++) {
+    total += message[i];
+  }
+  return total;
 }
