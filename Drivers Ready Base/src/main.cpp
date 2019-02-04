@@ -3,9 +3,12 @@
 #include "magicMenu.h"
 #include "storedSettings.h"
 
-#define MATCH_TIME_MILLIS       3*60*1000
-#define ARMING_TIME             5*1000
-#define DEBUG_SERIAL            true
+#define MATCH_TIME_MILLIS         3*60*1000
+#define ARMING_TIME               5*1000
+#define DEBUG_SERIAL              true
+#define DEBUG_BROADCAST_TIMEOUT   10
+
+long lastBroadcastTime;
 
 void setup() {
   //resetAll();
@@ -51,6 +54,16 @@ byte checkSum(byte message[], int numBytes) {
     total += message[i];
   }
   return total;
+}
+
+void serialEvent(){
+  if (DEBUG_SERIAL){
+    if (!(millis() > lastBroadcastTime + DEBUG_BROADCAST_TIMEOUT)){
+      delay(DEBUG_BROADCAST_TIMEOUT);
+    }
+    Serial1.write((byte)Serial.read());
+    lastBroadcastTime = millis();
+  }
 }
 
 void serialEvent1(){

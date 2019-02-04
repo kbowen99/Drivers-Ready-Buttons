@@ -8,7 +8,7 @@
 #define buttonID            0x02
 #define MESSAGE_LENGTH      40
 #define MESSAGE_PATTERN     0xB7
-#define TIMEOUT             1000
+#define TIMEOUT             10000
 
 long lastMessageTime;
 
@@ -40,6 +40,7 @@ void Parse_DRB_Message(byte message[])
         currentImage[i] = (((uint32_t) int(message[index]) << 16) | ((uint32_t) int(message[index + 1]) << 8) | (uint32_t) int(message[index + 2]));
     }
     imageChanged = true;
+    draw();
 }
 
 /**
@@ -53,7 +54,6 @@ void readSerial()
         
         if (inByte == MESSAGE_PATTERN)
         {
-
             while (Serial.available() == 0)
             {
                 delay(1);
@@ -76,7 +76,9 @@ void readSerial()
             int index = 0;
             while (millis() < startTime + TIMEOUT)
             {
-                while (Serial.available() == 0)
+                
+                delay(1);
+                while ((Serial.available() == 0) && (millis() < startTime + TIMEOUT))
                 {
                     delay(1);
                 }
@@ -87,10 +89,10 @@ void readSerial()
                     break;
                 }
             }
-
-            if (index != 36)
+            if (index != (NUMPIXELS * 3))
             {
-                Serial.print("ERR");
+                Serial.print("ERR ");
+                Serial.println(index);
                 Serial.flush();
                 return;
             }
