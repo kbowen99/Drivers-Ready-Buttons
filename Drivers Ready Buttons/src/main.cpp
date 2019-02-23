@@ -6,7 +6,7 @@
 
 #define BUTTON_PIN              3
 #define BUTTON_TIMEOUT          500
-#define BUTTON_HOLD_DURATION    5000.0F
+#define BUTTON_HOLD_DURATION    4000.0F
 #define DEBUG_OUTPUT            FALSE
 #define BATTERY_VOLTAGE_PIN     A0
 #define MAX_BATTERY_VOLTAGE     4.2
@@ -63,6 +63,7 @@ void loop() {
       lastHold = true;
     } else {
       setColor(255,0,0);
+      send_button_gameOver();
     }
     delay(10);
   }

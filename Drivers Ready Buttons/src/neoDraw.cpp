@@ -3,7 +3,7 @@
 #include "neoDraw.h"
 #include "XBeeProto.h"
 #include <Adafruit_NeoPixel.h>
-//#include <utility/Adafruit_MCP23017.h>
+#include <utility/Adafruit_MCP23017.h>
 #include <Wire.h>
 #include "storedSettings.h"
 
@@ -45,7 +45,10 @@ uint32_t Wheel(byte WheelPos) {
   return pixels.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
 
-//BLOCKING
+/**
+ * Gameover Animation
+ * BLOCKING FUNCTION
+ */
 void GameOver() {
   for (int i = 0; i < 3; i++) {
     setColor(0,0,0);

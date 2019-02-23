@@ -17,16 +17,28 @@ long lastMessageTime;
  */
 void send_Button_Pressed()
 {
-    Serial.write(MESSAGE_PATTERN);
-    delay(10);
-    Serial.write(0xFF);
-    delay(10);
-    Serial.write(0x02);
-    delay(10);
-    Serial.write(getButtonID());
-    delay(10);
     byte message[] = {MESSAGE_PATTERN, 0xFF, 0x02, getButtonID()};
+    send_serial_spaced(message, 4);
     Serial.write(checkSum(message,4));
+}
+
+/**
+ * Gameover message sent as button tap out
+ */
+void send_button_gameOver() {
+    byte message[] = {MESSAGE_PATTERN, 0xFF, 0x06, getButtonID()};
+    send_serial_spaced(message, 4);
+    Serial.write(checkSum(message,4));
+}
+
+/**
+ * Sends the message array with safe time delays
+ */
+void send_serial_spaced(byte m[], int l) {
+    for (int i = 0; i < l; i++){
+        Serial.write(m[i]);
+        delay(10);
+    }
 }
 
 /**
