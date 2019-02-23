@@ -31,6 +31,7 @@ void buttonSmash()
 {
   switch (currentState)
   {
+  case IDLE:
   case ARMED:
     if ((millis() - lastButtonSmash) > BUTTON_TIMEOUT && !lastHold)
     {
@@ -42,7 +43,6 @@ void buttonSmash()
     break;
   case GAME:
     break;
-  case IDLE:
   case GAMEOVER:
   default:
     break;

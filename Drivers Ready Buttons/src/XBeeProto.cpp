@@ -15,7 +15,7 @@
 #define MESSAGE_PATTERN 0xB7
 #define TIMEOUT 10000
 
-long lastMessageTime;
+unsigned long lastMessageTime;
 
 /**
  * Registers Button Press over the Network

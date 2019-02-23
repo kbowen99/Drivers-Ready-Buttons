@@ -43,6 +43,11 @@
 #define DRIVER_4_BUTTON_EEPROM                  EEPROM.length() - 2
 
 /**
+ * Programmed SA for the base station
+ */
+#define BASE_STATION_EEPROM                     EEPROM.length() - 1
+
+/**
  * Resets all values to default
  */
 void resetAll() {
@@ -54,6 +59,7 @@ void resetAll() {
     EEPROM.write(DRIVER_3_BUTTON_EEPROM, 0);
     EEPROM.write(DRIVER_4_BUTTON_EEPROM, 0);
     EEPROM.write(USE_STORED_CONFIGS_EEPROM, 0);
+    EEPROM.write(BASE_STATION_EEPROM, 0);
 }
 
 /**
@@ -162,4 +168,18 @@ uint8_t getNumberDrivers() {
  */
 void setNumberButtons(uint8_t n) {
     EEPROM.write(NUM_BUTTONS_EEPROM, n);
+}
+
+/**
+ * Gets the base station's source address
+ */
+uint8_t getBaseStationAddr(){
+    return EEPROM.read(BASE_STATION_EEPROM);
+}
+
+/**
+ * Sets the base station's source address
+ */
+void setBaseStationAddr(uint8_t addr) {
+    EEPROM.write(BASE_STATION_EEPROM, addr);
 }

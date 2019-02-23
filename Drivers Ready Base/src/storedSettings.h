@@ -17,3 +17,5 @@ uint8_t getDriver4SA();
 void setDriver4SA(uint8_t sa);
 uint8_t getNumberDrivers();
 void setNumberButtons(uint8_t n);
+uint8_t getBaseStationAddr();
+void setBaseStationAddr(uint8_t addr);
