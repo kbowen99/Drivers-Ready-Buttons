@@ -84,11 +84,9 @@ void setSpiralPercentage(float val) {
   }
   double magic = 0;
   float scalar = modf((val * NUMPIXELS), &magic);
-  // float scalar = val * 12.0F;
-  // scalar = scalar - (long)scalar;
-  pixels.setPixelColor(++index, pixels.Color(scalar * (float)getColorR(), scalar * (float)getColorG(), scalar * (float)getColorB()));
-  
-  for (;index < NUMPIXELS; index++){
+  pixels.setPixelColor(++index, pixels.Color((uint32_t)(scalar * (float)getColorR()),(uint32_t)(scalar * (float)getColorG()), (uint32_t)(scalar * (float)getColorB())));
+
+  for (index++;index < NUMPIXELS; index++){
     pixels.setPixelColor(index,pixels.Color(0,0,0));
   }
   pixels.show();
