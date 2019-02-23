@@ -12,3 +12,4 @@ void rainbowCycle(uint8_t wait);
 void setSpiralColor(int r, int g, int b);
 void setSpiralPercentage(float val);
 void setColor(int r, int g, int b);
+void GameOver();

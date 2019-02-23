@@ -3,7 +3,7 @@
 #include "neoDraw.h"
 #include "XBeeProto.h"
 #include <Adafruit_NeoPixel.h>
-#include <utility/Adafruit_MCP23017.h>
+//#include <utility/Adafruit_MCP23017.h>
 #include <Wire.h>
 #include "storedSettings.h"
 
@@ -44,6 +44,18 @@ uint32_t Wheel(byte WheelPos) {
   WheelPos -= 170;
   return pixels.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
+
+//BLOCKING
+void GameOver() {
+  for (int i = 0; i < 3; i++) {
+    setColor(0,0,0);
+    delay(250);
+    setColor(getColorR(), getColorG(), getColorB());
+    delay(250);
+  }
+  setSpiralColor(0,0,0);
+}
+
 
 /**
  * Spins a rainbow wheel.
