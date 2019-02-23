@@ -4,8 +4,8 @@
 #include <Arduino.h>
 #include "neoDraw.h"
 #include <avr/power.h>
+#include "storedSettings.h"
 
-#define buttonID            0x02
 #define MESSAGE_LENGTH      40
 #define MESSAGE_PATTERN     0xB7
 #define TIMEOUT             10000
@@ -23,9 +23,9 @@ void send_Button_Pressed()
     delay(10);
     Serial.write(0x02);
     delay(10);
-    Serial.write(buttonID);
+    Serial.write(getButtonID());
     delay(10);
-    byte message[] = {MESSAGE_PATTERN, 0xFF, 0x02, buttonID};
+    byte message[] = {MESSAGE_PATTERN, 0xFF, 0x02, getButtonID()};
     Serial.write(checkSum(message,4));
 }
 
@@ -59,7 +59,7 @@ void readSerial()
                 delay(1);
             }
             byte targetDevice = Serial.read();
-            if (targetDevice != buttonID)
+            if (targetDevice != getButtonID())
             {
                 return;
             }

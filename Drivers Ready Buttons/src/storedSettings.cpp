@@ -5,22 +5,27 @@
 /**
  * EEPROM Address with Flag
  */
-#define USE_STORED_CONFIGS_EEPROM               EEPROM.length() - 9
+#define USE_STORED_CONFIGS_EEPROM           EEPROM.length() - 9
+
+/**
+ * Programmed Button ID
+ */
+#define BUTTON_ID                           EEPROM.length() - 5
 
 /**
  * Learned Team Color 'B'
  */
-#define TEAM_COLOR_B                  EEPROM.length() - 4
+#define TEAM_COLOR_B                        EEPROM.length() - 4
 
 /**
  * Learned Team Color 'G'
  */
-#define TEAM_COLOR_G                  EEPROM.length() - 3
+#define TEAM_COLOR_G                        EEPROM.length() - 3
 
 /**
  * Learned Team Color 'R'
  */
-#define TEAM_COLOR_R                  EEPROM.length() - 2
+#define TEAM_COLOR_R                        EEPROM.length() - 2
 
 /**
  * Resets all values to default
@@ -29,6 +34,7 @@ void resetAll() {
     EEPROM.write(TEAM_COLOR_R, 255);
     EEPROM.write(TEAM_COLOR_G, 255);
     EEPROM.write(TEAM_COLOR_B, 255);
+    EEPROM.write(BUTTON_ID, 255);
     EEPROM.write(USE_STORED_CONFIGS_EEPROM, 1);
 }
 
@@ -68,6 +74,13 @@ void setColorB(int_fast8_t c) {
 }
 
 /**
+ * Sets Button ID
+ */
+void setButtonID(int_fast8_t id) {
+    EEPROM.write(BUTTON_ID, id);
+}
+
+/**
  * gets R Value for Team Color
  */
 uint8_t getColorR() {
@@ -86,4 +99,11 @@ uint8_t getColorG() {
  */
 uint8_t getColorB() {
     return EEPROM.read(TEAM_COLOR_B);
+}
+
+/**
+ * Gets the button's ID from EEPROM
+ */
+uint8_t getButtonID() {
+    return EEPROM.read(BUTTON_ID);
 }

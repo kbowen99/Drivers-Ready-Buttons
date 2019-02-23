@@ -30,7 +30,7 @@ void buttonSmash() {
 }
 
 void setup() {
-  //setColorR(0);setColorG(0);setColorB(0);setUseStored(true);
+  //setColorR(0);setColorG(255);setColorB(0);setUseStored(true);setButtonID(0x2);
   setupNeopixel();
   setSpiralColor(getColorR(),getColorG(),getColorB());
   Serial.begin(115200);
