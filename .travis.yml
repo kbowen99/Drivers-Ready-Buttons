@@ -36,6 +36,9 @@ cache:
 install:
     - pip install -U platformio
     - platformio update
+    - platformio lib -g install 'Adafruit NeoPixel'
+    - platformio lib -g install 'Adafruit RGB LCD Shield Library'
+    
 
 script:
     - cd 'Drivers Ready Buttons'
