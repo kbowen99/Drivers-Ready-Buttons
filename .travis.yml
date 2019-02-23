@@ -21,7 +21,7 @@
 
 
 
-Template #1: General project. Test it using existing `platformio.ini`.
+#Template #1: General project. Test it using existing `platformio.ini`.
 
 
 language: python
@@ -38,6 +38,9 @@ install:
     - platformio update
 
 script:
+    - cd '/Drivers Ready Buttons/'
+    - platformio run
+    - cd ..
     - cd '/Drivers Ready Base/'
     - platformio run
 
