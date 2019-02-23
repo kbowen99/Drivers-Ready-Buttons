@@ -6,9 +6,14 @@
 #include <avr/power.h>
 #include "storedSettings.h"
 
-#define MESSAGE_LENGTH      40
-#define MESSAGE_PATTERN     0xB7
-#define TIMEOUT             10000
+/**
+ * Messages generally follow the format of:
+ * MESSAGE_PATTERN, target device, message type, data(s), checksum()
+ */
+
+#define MESSAGE_LENGTH 40
+#define MESSAGE_PATTERN 0xB7
+#define TIMEOUT 10000
 
 long lastMessageTime;
 
@@ -19,23 +24,36 @@ void send_Button_Pressed()
 {
     byte message[] = {MESSAGE_PATTERN, 0xFF, 0x02, getButtonID()};
     send_serial_spaced(message, 4);
-    Serial.write(checkSum(message,4));
+    Serial.write(checkSum(message, 4));
 }
 
 /**
  * Gameover message sent as button tap out
  */
-void send_button_gameOver() {
+void send_button_gameOver()
+{
     byte message[] = {MESSAGE_PATTERN, 0xFF, 0x06, getButtonID()};
     send_serial_spaced(message, 4);
-    Serial.write(checkSum(message,4));
+    Serial.write(checkSum(message, 4));
+}
+
+/**
+ * Current battery status, and button 'pulse'
+ */
+void send_battery_status(byte vBatt)
+{
+    byte message[] = {MESSAGE_PATTERN, 0xFF, 0x08, getButtonID(), vBatt};
+    send_serial_spaced(message, 5);
+    Serial.write(checkSum(message, 5));
 }
 
 /**
  * Sends the message array with safe time delays
  */
-void send_serial_spaced(byte m[], int l) {
-    for (int i = 0; i < l; i++){
+void send_serial_spaced(byte m[], int l)
+{
+    for (int i = 0; i < l; i++)
+    {
         Serial.write(m[i]);
         delay(10);
     }
@@ -63,7 +81,7 @@ void readSerial()
     while (Serial.available())
     {
         byte inByte = Serial.read();
-        
+
         if (inByte == MESSAGE_PATTERN)
         {
             while (Serial.available() == 0)
@@ -88,7 +106,7 @@ void readSerial()
             int index = 0;
             while (millis() < startTime + TIMEOUT)
             {
-                
+
                 delay(1);
                 while ((Serial.available() == 0) && (millis() < startTime + TIMEOUT))
                 {
@@ -108,9 +126,15 @@ void readSerial()
                 Serial.flush();
                 return;
             }
-            while (Serial.available() == 0) { delay(1); }
+            while (Serial.available() == 0)
+            {
+                delay(1);
+            }
             byte ChecksumByte = Serial.read();
-            if (ChecksumByte != checkSum(message, NUMPIXELS*3)) { return; }
+            if (ChecksumByte != checkSum(message, NUMPIXELS * 3))
+            {
+                return;
+            }
             Parse_DRB_Message(message);
         }
     }
@@ -119,10 +143,12 @@ void readSerial()
 /**
  * Eric's Checksum implementation, should help a bit with data loss
  */
-byte checkSum(byte message[], int numBytes) {
-  byte total = 0x00;
-  for (int i = 0; i < numBytes; i++) {
-    total += message[i];
-  }
-  return total;
+byte checkSum(byte message[], int numBytes)
+{
+    byte total = 0x00;
+    for (int i = 0; i < numBytes; i++)
+    {
+        total += message[i];
+    }
+    return total;
 }

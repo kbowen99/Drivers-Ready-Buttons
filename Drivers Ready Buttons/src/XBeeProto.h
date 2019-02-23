@@ -7,3 +7,4 @@ void Parse_DRB_Message(byte message[]);
 void readSerial();
 byte checkSum(byte message[], int numBytes);
 void send_serial_spaced(byte m[], int l);
+void send_battery_status(byte vBatt);
