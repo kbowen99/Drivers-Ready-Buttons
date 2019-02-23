@@ -100,42 +100,68 @@ void readSerial()
             }
             byte messageType = Serial.read();
 
-            byte message[NUMPIXELS * 3];
-
-            long startTime = millis();
-            int index = 0;
-            while (millis() < startTime + TIMEOUT)
+            switch (messageType)
             {
+            case 0x01: // setImage Message
+                byte message[NUMPIXELS * 3];
 
-                delay(1);
-                while ((Serial.available() == 0) && (millis() < startTime + TIMEOUT))
+                unsigned long startTime = millis();
+                int index = 0;
+                while (millis() < startTime + TIMEOUT)
+                {
+
+                    delay(1);
+                    while ((Serial.available() == 0) && (millis() < startTime + TIMEOUT))
+                    {
+                        delay(1);
+                    }
+                    message[index] = Serial.read();
+                    index++;
+                    if (index == NUMPIXELS * 3)
+                    {
+                        break;
+                    }
+                }
+                if (index != (NUMPIXELS * 3))
+                {
+                    Serial.print("ERR ");
+                    Serial.println(index);
+                    Serial.flush();
+                    return;
+                }
+                while (Serial.available() == 0)
                 {
                     delay(1);
                 }
-                message[index] = Serial.read();
-                index++;
-                if (index == NUMPIXELS * 3)
+                byte ChecksumByte = Serial.read();
+                if (ChecksumByte != checkSum(message, NUMPIXELS * 3))
                 {
-                    break;
+                    return;
                 }
+                Parse_DRB_Message(message);
+                break;
+            case 0x03://Set Team Color
+                break;
+            case 0x04://match start
+                break;
+            case 0x05://Final Countdown
+                break;
+            case 0x06://gameOver
+                break;
+            case 0x07://powerdown
+                break;
+            case 0x09://rainBow
+                break;
+            case 0x0A://ACK
+                break;
+            case 0x0B://Arm
+                break;
+            case 0x00://not implemented
+            case 0x02://button press, ignored by other buttons
+            case 0x08://battery status, ignored by other buttons
+            default:
+                break;
             }
-            if (index != (NUMPIXELS * 3))
-            {
-                Serial.print("ERR ");
-                Serial.println(index);
-                Serial.flush();
-                return;
-            }
-            while (Serial.available() == 0)
-            {
-                delay(1);
-            }
-            byte ChecksumByte = Serial.read();
-            if (ChecksumByte != checkSum(message, NUMPIXELS * 3))
-            {
-                return;
-            }
-            Parse_DRB_Message(message);
         }
     }
 }
