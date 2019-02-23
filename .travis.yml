@@ -38,10 +38,10 @@ install:
     - platformio update
 
 script:
-    - cd '/Drivers Ready Buttons/'
+    - cd 'Drivers Ready Buttons'
     - platformio run
     - cd ..
-    - cd '/Drivers Ready Base/'
+    - cd 'Drivers Ready Base'
     - platformio run
 
 
