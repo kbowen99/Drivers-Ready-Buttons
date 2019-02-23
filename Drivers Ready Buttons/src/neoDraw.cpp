@@ -5,6 +5,7 @@
 #include <Adafruit_NeoPixel.h>
 #include <utility/Adafruit_MCP23017.h>
 #include <Wire.h>
+#include "storedSettings.h"
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
@@ -70,4 +71,32 @@ void setSpiralColor(int r, int g, int b){
       pixels.show();
       delay(SPIRALIZE_DELAY);
     } 
+}
+
+/**
+ * Sets the wheel to show a percentage.
+ * Accepts a value from 0.0F-1.0F
+ */
+void setSpiralPercentage(float val) {
+  int index = 0;;
+  for(index = 0; index < (val * NUMPIXELS); index++){
+    pixels.setPixelColor(index, pixels.Color(getColorR(),getColorG(),getColorB()));
+  }
+  float scalar = val * 12.0F;
+  scalar = scalar - (long)scalar;
+  pixels.setPixelColor(++index, pixels.Color(scalar * getColorR(), scalar * getColorG(), scalar * getColorB()));
+  for (;index < NUMPIXELS; index++){
+    pixels.setPixelColor(index,pixels.Color(0,0,0));
+  }
+  pixels.show();
+}
+
+/**
+ * Sets all pixels in the ring to the provided color
+ */
+void setColor(int r, int g, int b) {
+  for (int i = 0; i < NUMPIXELS; i++) {
+    pixels.setPixelColor(i, pixels.Color(r,g,b));
+  }
+  pixels.show();
 }

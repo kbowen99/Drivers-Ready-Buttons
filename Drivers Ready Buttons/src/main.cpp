@@ -5,8 +5,9 @@
 #include "storedSettings.h"
 
 #define BUTTON_PIN              3
-#define BUTTON_TIMEOUT          750
-#define DEBUG_OUTPUT            TRUE
+#define BUTTON_TIMEOUT          500
+#define BUTTON_HOLD_DURATION    4000.0F
+#define DEBUG_OUTPUT            FALSE
 #define BATTERY_VOLTAGE_PIN     A0
 #define MAX_BATTERY_VOLTAGE     4.2
 #define MIN_BATTERY_VOLTAGE     3.0
@@ -18,15 +19,24 @@ uint32_t currentImage[NUMPIXELS];
 bool imageChanged = false;
 
 unsigned long lastButtonSmash = 0;
+bool lastButtonSmashState = false;
+bool lastHold = false;
 short scaledBatteryVoltage = 0;
 
 void buttonSmash() {
-  if ((millis() - lastButtonSmash) > BUTTON_TIMEOUT){
+  if ((millis() - lastButtonSmash) > BUTTON_TIMEOUT && !lastHold){
     lastButtonSmash = millis();
     setSpiralColor(getColorR(),getColorG(),getColorB());
     send_Button_Pressed();
     setSpiralColor(0,0,0);
   }
+
+  if (lastHold) {
+    setColor(0,0,0);
+    lastHold = false;
+  }
+  
+  lastButtonSmashState = digitalRead(BUTTON_PIN);
 }
 
 void setup() {
@@ -38,13 +48,24 @@ void setup() {
   pinMode(BATTERY_VOLTAGE_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(BUTTON_PIN),buttonSmash,CHANGE);
 
-  rainbowCycle(1);
+  //rainbowCycle(2);
   setSpiralColor(0,0,0);
 }
 
 void loop() {
   //draw();
   updateVbatt();
+
+  if (!lastButtonSmashState && !digitalRead(BUTTON_PIN) && ((millis() - lastButtonSmash) > BUTTON_TIMEOUT)) {
+    if ((millis() - lastButtonSmash) < BUTTON_HOLD_DURATION) {
+      float delta = millis() - lastButtonSmash;
+      setSpiralPercentage(delta / BUTTON_HOLD_DURATION);
+      lastHold = true;
+    } else {
+      setColor(255,0,0);
+    }
+    delay(10);
+  }
 }
 
 void serialEvent() {
