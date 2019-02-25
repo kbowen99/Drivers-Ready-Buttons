@@ -3,6 +3,7 @@
 #include "magicMenu.h"
 #include "XBeeBaseProto.h"
 #include "main.h"
+#include "buttonStates.h"
 
 #define MESSAGE_PATTERN         0xB7
 #define TIMEOUT                 3000

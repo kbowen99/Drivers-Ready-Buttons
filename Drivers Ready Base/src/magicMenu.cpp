@@ -5,6 +5,7 @@
 #include <Adafruit_RGBLCDShield.h>
 #include <utility/Adafruit_MCP23017.h>
 #include "storedSettings.h"
+#include "buttonStates.h"
 
 #define PROGRAM_NAME            "ROBOCONTROL"
 #define SCREEN_WIDTH            16
@@ -27,8 +28,6 @@ unsigned long menuTimeout = 15*1000;
 unsigned long btnTimeout = 700;
 int tmp1 = 0;
 int tmp2 = 0;
-
-uint8_t buttonAddr[2] = {0xFF,0xFE};
 
 String mainStatus = "";
 
@@ -147,9 +146,9 @@ void navigateMenus(){
                     //verify Judge, Any key to continue
                     if (tmp2 > 0) {
                         tmp2 = 0;
-                        if (buttonAddr[0] == buttonAddr[1]){
+                        if (addressBuffer[0] == addressBuffer[1]){
                             subMenu++;
-                            setJudgeSA(buttonAddr[0]);
+                            setJudgeSA(addressBuffer[0]);
                             tmp1 = 1;
                         } else 
                             subMenu--;
@@ -167,7 +166,7 @@ void navigateMenus(){
                     //verify Driver, Any key to continue
                     if (tmp2 > 0) {
                         tmp2 = 0;
-                        if (buttonAddr[0] == buttonAddr[1]){
+                        if (addressBuffer[0] == addressBuffer[1]){
                             if (tmp1 < getNumberDrivers()){
                                 tmp1++;
                                 subMenu=5;
@@ -280,12 +279,12 @@ void drawCurrent(){
                 case 4://verify Judge
                     lcd.setCursor(0,0);
                     lcd.print("Judge ");
-                    lcd.print(buttonAddr[0] == buttonAddr[1] ? "Set" : "Not Set");
+                    lcd.print(addressBuffer[0] == addressBuffer[1] ? "Set" : "Not Set");
                     lcd.print("           ");
                     lcd.setCursor(0,1);
                     lcd.print("Addr:");
-                    if (buttonAddr[0] == buttonAddr[1])
-                        lcd.print(buttonAddr[0]);
+                    if (addressBuffer[0] == addressBuffer[1])
+                        lcd.print(addressBuffer[0]);
                     lcd.print("                ");
                     break;
                 case 5://Learn Driver X
@@ -299,12 +298,12 @@ void drawCurrent(){
                     lcd.setCursor(0,0);
                     lcd.print("Driver ");
                     lcd.print(tmp1);
-                    lcd.print(buttonAddr[0] == buttonAddr[1] ? " Set" : " Not Set");
+                    lcd.print(addressBuffer[0] == addressBuffer[1] ? " Set" : " Not Set");
                     lcd.print("           ");
                     lcd.setCursor(0,1);
                     lcd.print("Addr:");
-                    if (buttonAddr[0] == buttonAddr[1])
-                        lcd.print(buttonAddr[0]);
+                    if (addressBuffer[0] == addressBuffer[1])
+                        lcd.print(addressBuffer[0]);
                     lcd.print("                ");
                     break;
                 case 7:
@@ -336,13 +335,11 @@ void drawCurrent(){
 /**
  * Method to put info on the main screen (IE: Running, waiting, etc.)
  */
-void updateMainStatus(String s){
-    mainStatus = s + "           ";
-    screenChanged = true;
-    updateLCD();
-}
-
-void receivedAddr(uint8_t addr){
-    buttonAddr[1] = buttonAddr[0];
-    buttonAddr[0] = addr;
+void updateMainStatus(String s) {
+    String tmp = s + "           ";
+    if (!(tmp == mainStatus)) {
+        mainStatus = tmp;
+        screenChanged = true;
+        updateLCD();
+    }
 }
