@@ -2,11 +2,14 @@
 #include "storedSettings.h"
 #include "magicMenu.h"
 #include "XBeeBaseProto.h"
+#include "main.h"
 
-#define MESSAGE_PATTERN 0xB7
-#define TIMEOUT 10000
+#define MESSAGE_PATTERN         0xB7
+#define TIMEOUT                 3000
+#define WARN_CHECKSUM           true
 
 unsigned long lastMessageTime = 0;
+unsigned long lastByteTime = 0;
 
 /**
  * Sends the message array with safe time delays
@@ -21,13 +24,17 @@ void send_serial_spaced(byte m[], int l)
 }
 
 /**
- * display string for button press
+ * Waits until serial available or timeout
  */
-String btnDisp(int number) {
-    String tmp = "Button ";
-    tmp = tmp + number;
-    tmp = tmp + " pressed";
-    return tmp;
+bool readWait() {
+    while (Serial1.available() == 0 && (millis() - lastByteTime < TIMEOUT)) {
+        delay(1);
+    }
+    if (Serial1.available()) {
+        lastByteTime = millis();
+        return true;
+    }
+    return false;
 }
 
 /**
@@ -35,54 +42,62 @@ String btnDisp(int number) {
  */
 void readSerial()
 {
+    lastByteTime = millis();
     while (Serial1.available())
     {
         byte inByte = Serial1.read();
 
         if (inByte == MESSAGE_PATTERN)
         {
-            while (Serial1.available() == 0)
-            {
-                delay(1);
-            }
+            readWait();
             byte targetDevice = Serial1.read();
-            if (targetDevice != getBaseStationAddr() || targetDevice != 0xFF)
-            {
-                return;
-            }
-
-            while (Serial1.available() == 0)
-            {
-                delay(1);
-            }
+            if (targetDevice != getBaseStationAddr() || targetDevice != 0xFF) { return; }
+            readWait();
             byte messageType = Serial1.read();
 
             switch (messageType)
             {
             case 0x02: //button press
-                while (Serial1.available() == 0)
                 {
-                    delay(1);
+                    readWait();
+                    byte buttonSent = Serial1.read();
+                    readWait();
+                    byte ChecksumByte = Serial1.read();
+                    byte message[] = {0xB7, targetDevice, messageType, buttonSent};
+                    if (ChecksumByte != checkSum(message, 4))
+                    {
+                        if (WARN_CHECKSUM)
+                            updateMainStatus("badChecksum");
+                        return;
+                    }
+                    //Test code
+                    String tmp = "Btn ";
+                    tmp = tmp + buttonSent;
+                    tmp = tmp + " pressed";
+                    updateMainStatus(tmp);
+                    receivedAddr(buttonSent);
                 }
-                byte buttonSent = Serial1.read();
-                while (Serial1.available() == 0)
-                {
-                    delay(1);
-                }
-                byte ChecksumByte = Serial1.read();
-                byte message[] = {0xB7, targetDevice, messageType, buttonSent};
-                if (ChecksumByte != checkSum(message, 4))
-                {
-                    updateMainStatus("badChecksum");
-                    return;
-                }
-                //Test code
-                updateMainStatus(btnDisp(buttonSent));
-                receivedAddr(buttonSent);
                 break;
             case 0x06: //gameOver
                 break;
             case 0x08: //battery status, ignored by other buttons
+                {
+                    readWait();
+                    byte buttonSent = Serial1.read();
+                    readWait();
+                    byte battStatus = Serial1.read();
+                    readWait();
+                    byte ChecksumByte = Serial1.read();
+                    byte message[] = {0xB7, targetDevice, messageType, buttonSent, battStatus};
+                    if (ChecksumByte != checkSum(message, 5))
+                    {
+                        updateMainStatus("badVBSum");
+                        return;
+                    }
+                    buttonVoltages[buttonToIndex(buttonSent)] = ((battStatus / 255.0F) * 5.0F);
+                    buttonLastBroadcast[buttonToIndex(buttonSent)] = millis();
+                    receivedAddr(buttonSent);
+                }
                 break;
             case 0x0A: //ACK
                 break;
